@@ -112,7 +112,6 @@ window.addEventListener('alpine:init', () => {
             const ctx = tempCanvas.getContext('2d');
 
             ctx.drawImage(mainCanvas, 0, 0);
-
             ctx.drawImage(overlayCanvas, 0, 0);
 
             const link = document.createElement('a');
