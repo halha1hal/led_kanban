@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LED看板ジェネレータ</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.6.0/dist/panzoom.min.js"></script>
+  <script defer src="/script.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+
+<body x-data="ledcanvas">
+  <header>
+    <h1>LED看板ジェネレータ</h1>
+  </header>
+  <div class="controls">
+    <label for="upload">ドット絵をアップロード: </label>
+    <input type="file" id="upload" accept="image/*" @change="uploadFile">
+    <label for="basecolor">ベースカラー: </label>
+    <input type="color" id="basecolor" value="#000000" x-model.lazy="baseColor">
+    <label for="patternsize">パターンサイズ(px): </label>
+    <input type="number" id="patternsize" min="1" x-model.lazy.number="patternSize">
+    <label for="circlesize">円の直径(px): </label>
+    <input type="number" id="circlesize" min="1" x-model.lazy.number="circleSize">
+    <button type="button" @click="downloadImage">ダウンロード</button>
+  </div>
+  <div id="canvasViewport" x-ref="canvasViewport">
+    <div id="canvasContainer" x-ref="canvasContainer">
+      <canvas id="overlayCanvas" x-ref="overlayCanvas"></canvas>
+      <canvas id="mainCanvas" x-ref="mainCanvas"></canvas>
+    </div>
+  </div>
+  <footer>
+    <p>
+      編集処理はブラウザ内で完結しており、画像は外部に送信されません。
+    </p>
+  </footer>
+</body>
+
+</html>
