@@ -6,6 +6,7 @@
 @media (prefers-color-scheme: dark) {
     :root {
         --clr-bg: gray;
+        --clr-bg-half: rgba(128, 128, 128, 0.5);
         --clr-text: white;
     }
 }
@@ -40,16 +41,57 @@ header {
     right: 0;
     box-sizing: border-box;
     background-color: var(--clr-bg);
+
     .controls {
         width: 100%;
         height: 100%;
         box-sizing: border-box;
+
         li {
             overflow-wrap: break-word;
         }
     }
+
     p {
         margin: 0;
+    }
+}
+
+.hamburger-button {
+    display: none;
+    flex-direction: column;
+    justify-content: space-around;
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    z-index: 4;
+    margin-right: auto;
+    position: relative;
+    transform: translateX(-110%);
+
+    .hamburger-line {
+        width: 32px;
+        height: 4px;
+        background-color: var(--clr-text);
+        transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+    }
+}
+
+.controls-container.is-open {
+    .hamburger-button .hamburger-line:nth-child(1) {
+        transform: translateY(10px) rotate(45deg);
+    }
+
+    .hamburger-button .hamburger-line:nth-child(2) {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+
+    .hamburger-button .hamburger-line:nth-child(3) {
+        transform: translateY(-10px) rotate(-45deg);
     }
 }
 
@@ -99,5 +141,26 @@ footer {
         line-height: 100cqh;
         font-size: 80cqh;
         margin: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .hamburger-button {
+        display: flex;
+    }
+
+    #canvasViewport {
+        width: 100%;
+    }
+
+    .controls-container {
+        width: 300px;
+        z-index: 3;
+        background-color: var(--clr-bg-half);
+        transform: translateX(100%);
+        transition: transform ease-out 0.3s;
+    }
+    .controls-container.is-open {
+        transform: translateX(0);
     }
 }

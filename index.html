@@ -15,7 +15,12 @@
   <header>
     <h1>LED看板ジェネレータ</h1>
   </header>
-  <div class="controls-container">
+  <div class="controls-container" x-data="{ open: false }"  @click.outside="open = false"  :class="{ 'is-open': open }">
+    <button type="button" class="hamburger-button" aria-label="Menu" @click="open = !open">
+      <span class="hamburger-line"></span>
+      <span class="hamburger-line"></span>
+      <span class="hamburger-line"></span>
+    </button>
     <ol class="controls" start="0">
       <li>
         <p>その辺のドット絵作成ツールでドット絵を作成</p>
