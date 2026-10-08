@@ -2,6 +2,7 @@
 window.addEventListener('alpine:init', () => {
     Alpine.data('ledcanvas', () => ({
         file: null,
+        img: null,
         _baseColor: '#000000',
         get baseColor() {
             return this._baseColor
@@ -10,13 +11,21 @@ window.addEventListener('alpine:init', () => {
             this._baseColor = value;
             this.refreshOverlay();
         },
-        _patternSize: 1,
-        get patternSize() {
-            return this._patternSize
+        _patternSizeIn: 1,
+        get patternSizeIn() {
+            return this._patternSizeIn
         },
-        set patternSize(value) {
-            this._patternSize = Math.max(1, value);
-            this.refreshOverlay();
+        set patternSizeIn(value) {
+            this._patternSizeIn = Math.max(1, value);
+            this.displayImage();
+        },
+        _patternSizeOut: 1,
+        get patternSizeOut() {
+            return this._patternSizeOut
+        },
+        set patternSizeOut(value) {
+            this._patternSizeOut = Math.max(1, value);
+            this.displayImage();
         },
         _circleSize: 1,
         get circleSize() {
@@ -34,19 +43,9 @@ window.addEventListener('alpine:init', () => {
             this.file = newFile
             const img = new Image();
             img.onload = () => {
-                const canvas = this.$refs.mainCanvas;
-
-                canvas.width = img.naturalWidth;
-                canvas.height = img.naturalHeight;
-
-                this.$refs.canvasContainer.width = img.naturalWidth;
-                this.$refs.canvasContainer.height = img.naturalHeight;
-                this.$refs.overlayCanvas.width = img.naturalWidth;
-                this.$refs.overlayCanvas.height = img.naturalHeight;
-
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0);
-
+                this.img = img;
+                this.displayImage();
+                URL.revokeObjectURL(this.img.src);
                 this.panzoom = Panzoom(this.$refs.canvasContainer, {
                     maxScale: 5,
                     minScale: 0.1,
@@ -54,15 +53,36 @@ window.addEventListener('alpine:init', () => {
                     cursor: 'grab',
                 });
 
-                canvas.parentElement.addEventListener(
+                this.$refs.canvasContainer.addEventListener(
                     'wheel',
                     this.panzoom.zoomWithWheel
                 );
-
-                URL.revokeObjectURL(img.src);
             };
             img.src = URL.createObjectURL(this.file);
         },
+
+        displayImage() {
+            if (!this.file || !this.img) { return }
+            const canvas = this.$refs.mainCanvas;
+
+            const canvasScale = 1 / this.patternSizeIn * this.patternSizeOut
+            const canvasWidth = this.img.naturalWidth * canvasScale;
+            const canvasHeight = this.img.naturalHeight * canvasScale;
+
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
+
+            this.$refs.canvasContainer.width = canvasWidth;
+            this.$refs.canvasContainer.height = canvasHeight;
+            this.$refs.overlayCanvas.width = canvasWidth;
+            this.$refs.overlayCanvas.height = canvasHeight;
+
+            const ctx = canvas.getContext('2d');
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(this.img, 0, 0, canvasWidth, canvasHeight);
+            this.refreshOverlay()
+        },
+
         refreshOverlay() {
             const mainCanvas = this.$refs.mainCanvas;
             const overlayCanvas = this.$refs.overlayCanvas;
@@ -76,15 +96,15 @@ window.addEventListener('alpine:init', () => {
             overlayCanvas.height = height;
 
             const tileCanvas = document.createElement('canvas');
-            tileCanvas.width = this._patternSize;
-            tileCanvas.height = this._patternSize;
+            tileCanvas.width = this._patternSizeOut;
+            tileCanvas.height = this._patternSizeOut;
             const tileCtx = tileCanvas.getContext('2d');
 
             tileCtx.fillStyle = this._baseColor;
-            tileCtx.fillRect(0, 0, this._patternSize, this._patternSize);
+            tileCtx.fillRect(0, 0, this._patternSizeOut, this._patternSizeOut);
             tileCtx.globalCompositeOperation = 'destination-out';
             tileCtx.beginPath();
-            tileCtx.arc(this._patternSize / 2, this._patternSize / 2, this._circleSize / 2, 0, Math.PI * 2);
+            tileCtx.arc(this._patternSizeOut / 2, this._patternSizeOut / 2, this._circleSize / 2, 0, Math.PI * 2);
             tileCtx.fill();
 
             const overlayCtx = overlayCanvas.getContext('2d');
