@@ -36,7 +36,20 @@ window.addEventListener('alpine:init', () => {
             this.refreshOverlay();
         },
         panzoom: null,
-        init() { },
+
+        init() {
+            this.panzoom = Panzoom(this.$refs.canvasContainer, {
+                maxScale: 5,
+                minScale: 0.1,
+                contain: 'outside',
+                cursor: 'grab',
+            });
+            this.$refs.canvasContainer.addEventListener(
+                'wheel',
+                this.panzoom.zoomWithWheel
+            );
+        },
+
         uploadFile(event) {
             const newFile = event.target.files[0];
             if (!newFile || this.file === newFile) { return }
@@ -46,17 +59,6 @@ window.addEventListener('alpine:init', () => {
                 this.img = img;
                 this.displayImage();
                 URL.revokeObjectURL(this.img.src);
-                this.panzoom = Panzoom(this.$refs.canvasContainer, {
-                    maxScale: 5,
-                    minScale: 0.1,
-                    contain: 'outside',
-                    cursor: 'grab',
-                });
-
-                this.$refs.canvasContainer.addEventListener(
-                    'wheel',
-                    this.panzoom.zoomWithWheel
-                );
             };
             img.src = URL.createObjectURL(this.file);
         },
