@@ -5,7 +5,7 @@ window.addEventListener('alpine:init', () => {
         img: null,
         _baseColor: '#000000',
         get baseColor() {
-            return this._baseColor
+            return this._baseColor;
         },
         set baseColor(value) {
             this._baseColor = value;
@@ -13,7 +13,7 @@ window.addEventListener('alpine:init', () => {
         },
         _patternSizeIn: 1,
         get patternSizeIn() {
-            return this._patternSizeIn
+            return this._patternSizeIn;
         },
         set patternSizeIn(value) {
             this._patternSizeIn = Math.max(1, value);
@@ -21,7 +21,7 @@ window.addEventListener('alpine:init', () => {
         },
         _patternSizeOut: 1,
         get patternSizeOut() {
-            return this._patternSizeOut
+            return this._patternSizeOut;
         },
         set patternSizeOut(value) {
             this._patternSizeOut = Math.max(1, value);
@@ -29,7 +29,7 @@ window.addEventListener('alpine:init', () => {
         },
         _circleSize: 1,
         get circleSize() {
-            return this._circleSize
+            return this._circleSize;
         },
         set circleSize(value) {
             this._circleSize = Math.max(1, value);
@@ -52,8 +52,8 @@ window.addEventListener('alpine:init', () => {
 
         uploadFile(event) {
             const newFile = event.target.files[0];
-            if (!newFile || this.file === newFile) { return }
-            this.file = newFile
+            if (!newFile || this.file === newFile) return;
+            this.file = newFile;
             const img = new Image();
             img.onload = () => {
                 this.img = img;
@@ -64,10 +64,10 @@ window.addEventListener('alpine:init', () => {
         },
 
         displayImage() {
-            if (!this.file || !this.img) { return }
+            if (!this.file || !this.img) return;
             const canvas = this.$refs.mainCanvas;
 
-            const canvasScale = 1 / this.patternSizeIn * this.patternSizeOut
+            const canvasScale = 1 / this.patternSizeIn * this.patternSizeOut;
             const canvasWidth = this.img.naturalWidth * canvasScale;
             const canvasHeight = this.img.naturalHeight * canvasScale;
 
@@ -82,7 +82,7 @@ window.addEventListener('alpine:init', () => {
             const ctx = canvas.getContext('2d');
             ctx.imageSmoothingEnabled = false;
             ctx.drawImage(this.img, 0, 0, canvasWidth, canvasHeight);
-            this.refreshOverlay()
+            this.refreshOverlay();
         },
 
         refreshOverlay() {
