@@ -119,7 +119,6 @@ window.addEventListener('alpine:init', () => {
                 this.isDrawing = false;
                 this.panzoom.handleUp(event);
             });
-            console.log(this.checkCache());
         },
 
         uploadFile(event) {
@@ -138,7 +137,6 @@ window.addEventListener('alpine:init', () => {
         },
 
         async checkCache() {
-            console.log("checking cache");
             const cache = await caches.open('editData');
             const response = await cache.match('/last-draft');
             if (response) {
@@ -179,7 +177,6 @@ window.addEventListener('alpine:init', () => {
         },
 
         async saveToCache() {
-            console.log("data saving");
             if (!this.doesSavetoCache) return;
             const mainCanvas = this.$refs.mainCanvas;
             const cache = await caches.open('editData');
@@ -196,14 +193,11 @@ window.addEventListener('alpine:init', () => {
                 headers: { 'Content-Type': 'application/json' }
             });
             await cache.put('/last-draft', response);
-            console.log(draftData);
         },
 
         startDrawing() {
             this.img = null;
             this.file = null;
-            console.log(this._patternNumWidth, this.targetWidth);
-            console.log(this._patternNumHeight, this.targetHeight);
 
             const mainCanvas = this.$refs.mainCanvas;
             mainCanvas.width = this.targetWidth;
