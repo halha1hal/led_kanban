@@ -175,6 +175,7 @@ window.addEventListener('alpine:init', () => {
             };
             this.refreshOverlay();
             img.src = draftData.canvasImage;
+            this.doesSavetoCache = true;
         },
 
         async saveToCache() {
