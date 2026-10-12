@@ -3,6 +3,36 @@ window.addEventListener('alpine:init', () => {
     Alpine.data('ledcanvas', () => ({
         file: null,
         img: null,
+        inputType: 'uploadimage',
+        targetWidth: 1,
+        targetHeight: 1,
+        _patternNumWidth: 1,
+        get patternNumWidth() {
+            return this._patternNumWidth;
+        },
+        set patternNumWidth(value) {
+            this._patternNumWidth = Math.max(1, value);
+            this.targetWidth = this._patternNumWidth * this.patternSizeOut;
+            this.startDrawing();
+        },
+        _patternNumHeight: 1,
+        get patternNumHeight() {
+            return this._patternNumHeight;
+        },
+        set patternNumHeight(value) {
+            this._patternNumHeight = Math.max(1, value);
+            this.targetHeight = this._patternNumHeight * this.patternSizeOut;
+            this.startDrawing();
+        },
+        _isDrawing: false,
+        get isDrawing() {
+            return this._isDrawing;
+        },
+        set isDrawing(value) {
+            this._isDrawing = value
+            if (value) { }
+        },
+        brushColor: '#000000',
         _baseColor: '#000000',
         get baseColor() {
             return this._baseColor;
@@ -38,16 +68,50 @@ window.addEventListener('alpine:init', () => {
         panzoom: null,
 
         init() {
-            this.panzoom = Panzoom(this.$refs.canvasContainer, {
+            const canvasContainer = this.$refs.canvasContainer;
+            this.panzoom = Panzoom(canvasContainer, {
                 maxScale: 5,
                 minScale: 0.1,
                 contain: 'outside',
                 cursor: 'grab',
+                noBind: true,
             });
-            this.$refs.canvasContainer.addEventListener(
+            canvasContainer.addEventListener(
                 'wheel',
                 this.panzoom.zoomWithWheel
             );
+            canvasContainer.addEventListener('contextmenu', (event) => {
+                event.preventDefault();
+            });
+            canvasContainer.addEventListener('pointerdown', (event) => {
+                switch (event.buttons) {
+                    case 1:
+                        this.isDrawing = true;
+                        break;
+                    case 2:
+                        this.panzoom.handleDown(event);
+                        break;
+                }
+            });
+            canvasContainer.addEventListener('pointermove', (event) => {
+                switch (event.buttons) {
+                    case 1:
+                        this.drawSquare(event);
+                        break;
+                    case 2:
+                        this.panzoom.handleMove(event);
+                        break;
+                }
+            });
+            canvasContainer.addEventListener('pointerup', (event) => {
+                this.isDrawing = false;
+                this.panzoom.handleUp(event);
+            });
+            canvasContainer.addEventListener('pointercancel', (event) => {
+                this.isDrawing = false;
+                this.panzoom.handleUp(event);
+            });
+
         },
 
         uploadFile(event) {
@@ -57,19 +121,46 @@ window.addEventListener('alpine:init', () => {
             const img = new Image();
             img.onload = () => {
                 this.img = img;
+                this.targetWidth = img.naturalWidth;
+                this.targetHeight = img.naturalHeight;
                 this.displayImage();
                 URL.revokeObjectURL(this.img.src);
             };
             img.src = URL.createObjectURL(this.file);
         },
 
+        startDrawing() {
+            this.img = null;
+            this.file = null;
+            console.log(this._patternNumWidth, this.targetWidth);
+            console.log(this._patternNumHeight, this.targetHeight);
+
+            const mainCanvas = this.$refs.mainCanvas;
+            mainCanvas.width = this.targetWidth;
+            mainCanvas.height = this.targetHeight;
+            this.$refs.canvasContainer.width = this.targetWidth;
+            this.$refs.canvasContainer.height = this.targetHeight;
+            this.$refs.overlayCanvas.width = this.targetWidth;
+            this.$refs.overlayCanvas.height = this.targetHeight;
+            const ctx = mainCanvas.getContext('2d');
+            ctx.clearRect(0, 0, this.targetWidth, this.targetHeight)
+            ctx.imageSmoothingEnabled = false;
+            ctx.fillStyle = this.baseColor;
+            ctx.fillRect(0, 0, this.targetWidth, this.targetHeight);
+        },
+
         displayImage() {
-            if (!this.file || !this.img) return;
             const canvas = this.$refs.mainCanvas;
+            const tempCanvas = document.createElement('canvas')
+            if (!this.img) {
+                tempCanvas.width = canvas.width;
+                tempCanvas.height = canvas.height;
+                tempCanvas.getContext('2d').drawImage(canvas, 0, 0);
+            }
 
             const canvasScale = 1 / this.patternSizeIn * this.patternSizeOut;
-            const canvasWidth = this.img.naturalWidth * canvasScale;
-            const canvasHeight = this.img.naturalHeight * canvasScale;
+            const canvasWidth = this.targetWidth * canvasScale;
+            const canvasHeight = this.targetHeight * canvasScale;
 
             canvas.width = canvasWidth;
             canvas.height = canvasHeight;
@@ -80,8 +171,9 @@ window.addEventListener('alpine:init', () => {
             this.$refs.overlayCanvas.height = canvasHeight;
 
             const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight)
             ctx.imageSmoothingEnabled = false;
-            ctx.drawImage(this.img, 0, 0, canvasWidth, canvasHeight);
+            ctx.drawImage(this.img ? this.img : tempCanvas, 0, 0, canvasWidth, canvasHeight);
             this.refreshOverlay();
         },
 
@@ -117,6 +209,25 @@ window.addEventListener('alpine:init', () => {
                 overlayCtx.fillStyle = pattern;
                 overlayCtx.fillRect(0, 0, width, height);
             }
+        },
+
+        drawSquare(event) {
+
+            if (event.shiftKey) return;
+            const mainCanvas = this.$refs.mainCanvas;
+            if (!this.isDrawing) return;
+            if (!mainCanvas) return;
+            if (!this.panzoom) return;
+            const ctx = mainCanvas.getContext('2d')
+            const rect = mainCanvas.getBoundingClientRect();
+            const localX =
+                (event.clientX - rect.left) * mainCanvas.width / rect.width;
+            const localY =
+                (event.clientY - rect.top) * mainCanvas.height / rect.height;
+            const drawX = Math.floor(localX / this.patternSizeOut) * this.patternSizeOut;
+            const drawY = Math.floor(localY / this.patternSizeOut) * this.patternSizeOut;
+            ctx.fillStyle = this.brushColor;
+            ctx.fillRect(drawX, drawY, this.patternSizeOut, this.patternSizeOut);
         },
 
         downloadImage() {

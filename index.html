@@ -15,7 +15,7 @@
   <header>
     <h1>LED看板ジェネレータ</h1>
   </header>
-  <div class="controls-container" x-data="{ open: false }"  @click.outside="open = false"  :class="{ 'is-open': open }">
+  <div class="controls-container" x-data="{ open: false }" @click.outside="open = false" :class="{ 'is-open': open }">
     <button type="button" class="hamburger-button" aria-label="Menu" @click="open = !open">
       <span class="hamburger-line"></span>
       <span class="hamburger-line"></span>
@@ -23,18 +23,44 @@
     </button>
     <ol class="controls" start="0">
       <li>
+        <fieldset>
+          <legend>描画タイプを選択</legend>
+          <input type="radio" id="upload-image" name="inputtype" value="uploadimage" checked x-model="inputType" />
+          <label for="upload-image">ドット絵をアップロード</label>
+          <input type="radio" id="from-drawing" name="inputtype" value="fromdrawing" x-model="inputType" />
+          <label for="from-drawing">ここで書く</label>
+        </fieldset>
+      </li>
+      <li x-show="inputType === 'uploadimage'">
         <p>その辺のドット絵作成ツールでドット絵を作成</p>
         <p>※その時使ったドットのサイズを覚えておいて！</p>
       </li>
-      <li>
+      <li x-show="inputType === 'uploadimage'">
         <label for="upload">ドット絵をアップロード: </label>
         <input type="file" id="upload" accept="image/*" @change="uploadFile">
+      </li>
+      <li x-show="inputType === 'fromdrawing'">
+        <fieldset>
+          <legend>ドット数を入力してください</legend>
+          <div>
+            <label for="coord-x">横</label>
+            <input type="number" id="coord-x" name="x" min="1" x-model.lazy.number="patternNumWidth">
+          </div>
+          <div>
+            <label for="coord-y">縦</label>
+            <input type="number" id="coord-y" name="y" min="1" x-model.lazy.number="patternNumHeight">
+          </div>
+        </fieldset>
+      </li>
+      <li x-show="inputType === 'fromdrawing'">
+        <label for="brushcolor">ブラシカラーを選択: </label>
+        <input type="color" id="brushcolor" value="#000000" x-model.lazy="brushColor">
       </li>
       <li>
         <label for="basecolor">ベースカラーを選択: </label>
         <input type="color" id="basecolor" value="#000000" x-model.lazy="baseColor">
       </li>
-      <li>
+      <li x-show="inputType === 'uploadimage'">
         <label for="patternsize-in">(入力)ドットのサイズを入力(px): </label>
         <input type="number" id="patternsize-in" min="1" x-model.lazy.number="patternSizeIn">
       </li>
@@ -50,6 +76,10 @@
         <button type="button" @click="downloadImage">ダウンロード</button>
       </li>
     </ol>
+    <p>エディタの使い方</p>
+    <p>左クリック: 描画 (「ここで書く」場合のみ)</p>
+    <p>スクロール: ズーム</p>
+    <p>右クリック: パンニング</p>
   </div>
   <div id="canvasViewport" x-ref="canvasViewport">
     <div id="canvasContainer" x-ref="canvasContainer">
