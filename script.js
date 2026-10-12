@@ -3,6 +3,8 @@ window.addEventListener('alpine:init', () => {
     Alpine.data('ledcanvas', () => ({
         file: null,
         img: null,
+        isCacheAvailable: false,
+        doesSavetoCache: false,
         inputType: 'uploadimage',
         targetWidth: 1,
         targetHeight: 1,
@@ -14,6 +16,7 @@ window.addEventListener('alpine:init', () => {
             this._patternNumWidth = Math.max(1, value);
             this.targetWidth = this._patternNumWidth * this.patternSizeOut;
             this.startDrawing();
+            this.saveToCache();
         },
         _patternNumHeight: 1,
         get patternNumHeight() {
@@ -23,6 +26,7 @@ window.addEventListener('alpine:init', () => {
             this._patternNumHeight = Math.max(1, value);
             this.targetHeight = this._patternNumHeight * this.patternSizeOut;
             this.startDrawing();
+            this.saveToCache();
         },
         _isDrawing: false,
         get isDrawing() {
@@ -30,7 +34,8 @@ window.addEventListener('alpine:init', () => {
         },
         set isDrawing(value) {
             this._isDrawing = value
-            if (value) { }
+            if (value) { this.drawSquare() }
+            else { this.saveToCache() };
         },
         brushColor: '#000000',
         _baseColor: '#000000',
@@ -40,6 +45,7 @@ window.addEventListener('alpine:init', () => {
         set baseColor(value) {
             this._baseColor = value;
             this.refreshOverlay();
+            this.saveToCache();
         },
         _patternSizeIn: 1,
         get patternSizeIn() {
@@ -64,10 +70,12 @@ window.addEventListener('alpine:init', () => {
         set circleSize(value) {
             this._circleSize = Math.max(1, value);
             this.refreshOverlay();
+            this.saveToCache();
         },
         panzoom: null,
 
         init() {
+            // initialize panzoom and bind events
             const canvasContainer = this.$refs.canvasContainer;
             this.panzoom = Panzoom(canvasContainer, {
                 maxScale: 5,
@@ -111,7 +119,7 @@ window.addEventListener('alpine:init', () => {
                 this.isDrawing = false;
                 this.panzoom.handleUp(event);
             });
-
+            console.log(this.checkCache());
         },
 
         uploadFile(event) {
@@ -127,6 +135,67 @@ window.addEventListener('alpine:init', () => {
                 URL.revokeObjectURL(this.img.src);
             };
             img.src = URL.createObjectURL(this.file);
+        },
+
+        async checkCache() {
+            console.log("checking cache");
+            const cache = await caches.open('editData');
+            const response = await cache.match('/last-draft');
+            if (response) {
+                this.isCacheAvailable = true;
+                return await response.json();
+            } else {
+                this.isCacheAvailable = false;
+                return;
+            }
+        },
+
+        async displayCache() {
+            const draftData = await this.checkCache()
+            if (!draftData) return;
+            this._patternSizeOut = draftData.patternSizeOut;
+            this._patternNumWidth = draftData.patternNumWidth;
+            this.targetWidth = this._patternNumWidth * this.patternSizeOut;
+            this._patternNumHeight = draftData.patternNumHeight;
+            this.targetHeight = this._patternNumHeight * this.patternSizeOut;
+            this._circleSize = draftData.circleSize;
+            this._baseColor = draftData.baseColor;
+            const mainCanvas = this.$refs.mainCanvas;
+            mainCanvas.width = this.targetWidth;
+            mainCanvas.height = this.targetHeight;
+            this.$refs.canvasContainer.width = this.targetWidth;
+            this.$refs.canvasContainer.height = this.targetHeight;
+            this.$refs.overlayCanvas.width = this.targetWidth;
+            this.$refs.overlayCanvas.height = this.targetHeight;
+            const ctx = mainCanvas.getContext('2d');
+            const img = new Image()
+            img.onload = () => {
+                ctx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
+                ctx.drawImage(img, 0, 0);
+            };
+            this.refreshOverlay();
+            img.src = draftData.canvasImage;
+        },
+
+        async saveToCache() {
+            console.log("data saving");
+            if (!this.doesSavetoCache) return;
+            const mainCanvas = this.$refs.mainCanvas;
+            const cache = await caches.open('editData');
+            const dataURL = mainCanvas.toDataURL('image/png');
+            const draftData = {
+                canvasImage: dataURL,
+                patternSizeOut: this.patternSizeOut,
+                patternNumWidth: this.patternNumWidth,
+                patternNumHeight: this.patternNumHeight,
+                circleSize: this.circleSize,
+                baseColor: this.baseColor,
+            };
+            const response = new Response(JSON.stringify(draftData), {
+                headers: { 'Content-Type': 'application/json' }
+            });
+            await cache.put('/last-draft', response);
+            console.log(draftData);
         },
 
         startDrawing() {
