@@ -34,8 +34,7 @@ window.addEventListener('alpine:init', () => {
         },
         set isDrawing(value) {
             this._isDrawing = value
-            if (value) { this.drawSquare() }
-            else { this.saveToCache() };
+            if (!value) { this.saveToCache() };
         },
         brushColor: '#000000',
         _baseColor: '#000000',
@@ -95,6 +94,7 @@ window.addEventListener('alpine:init', () => {
                 switch (event.buttons) {
                     case 1:
                         this.isDrawing = true;
+                        this.drawSquare(event);
                         break;
                     case 2:
                         this.panzoom.handleDown(event);
@@ -276,8 +276,6 @@ window.addEventListener('alpine:init', () => {
         },
 
         drawSquare(event) {
-
-            if (event.shiftKey) return;
             const mainCanvas = this.$refs.mainCanvas;
             if (!this.isDrawing) return;
             if (!mainCanvas) return;
