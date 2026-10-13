@@ -40,9 +40,7 @@
         <input type="file" id="upload" accept="image/*" @change="uploadFile">
       </li>
       <li x-show="inputType === 'fromdrawing'">
-        <div x-show="isCacheAvailable">
-          <button type="button" @click="displayCache">前回の作業内容をキャッシュから読み込み</button>
-        </div>
+        <button type="button" @click="displayCache" x-show="isCacheAvailable">前回の作業内容をキャッシュから読み込み</button>
         <label for="doesSavetoCache">変更をキャッシュへ逐次保存する</label>
         <input type="checkbox" id="doesSavetoCache" x-model="doesSavetoCache" />
       </li>

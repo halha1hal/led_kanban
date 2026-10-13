@@ -119,6 +119,7 @@ window.addEventListener('alpine:init', () => {
                 this.isDrawing = false;
                 this.panzoom.handleUp(event);
             });
+            this.checkCache();
         },
 
         uploadFile(event) {
